@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Multi-Mes Interactivo</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuración de la fuente y estilos generales */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; 
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Alinear arriba para el scroll de meses */
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        /* Contenedor principal para permitir múltiples meses */
+        #main-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px; /* Espacio entre los meses */
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        /* Contenedor individual del mes */
+        .month-container {
+            background-color: #ffffff;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 1rem; /* rounded-2xl */
+            padding: 24px 32px; /* p-6 sm:p-p8 */
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        /* --- Animaciones y Estilos Custom (Manteniendo las de la versión anterior) --- */
+
+        /* Keyframes para la animación de la 'X' */
+        @keyframes drawX {
+            0% { transform: scaleX(0); opacity: 0; }
+            100% { transform: scaleX(1); opacity: 1; }
+        }
+
+        /* Estilo para los días pasados con la 'X' */
+        .line-through-x {
+            position: relative;
+            color: #9ca3af; 
+            font-weight: 400;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 3rem; 
+            width: 3rem;
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 9999px; 
+            transition: all 0.3s;
+        }
+
+        /* Creación de la 'X' usando pseudo-elementos */
+        .line-through-x::before,
+        .line-through-x::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform-origin: center center;
+            width: 100%;
+            height: 2px;
+            background-color: #ef4444; /* Rojo para la X */
+            border-radius: 1px;
+            opacity: 0;
+        }
+
+        /* Animación de la primera línea de la X */
+        .line-through-x::before {
+            transform: translate(-50%, -50%) rotate(45deg) scaleX(0);
+            animation: drawX 0.5s ease-out 0.2s forwards;
+        }
+        /* Animación de la segunda línea de la X */
+        .line-through-x::after {
+            transform: translate(-50%, -50%) rotate(-45deg) scaleX(0);
+            animation: drawX 0.5s ease-out 0.4s forwards;
+        }
+
+        /* Keyframes para el pulso del día actual */
+        @keyframes pulse-once {
+            0%, 100% { opacity: 1; transform: scale(1.1); }
+            50% { opacity: 0.8; transform: scale(1); }
+        }
+        .animate-pulse-once {
+            animation: pulse-once 1.5s ease-in-out infinite;
+        }
+
+        /* Keyframes para la alarma (Día 14) */
+        @keyframes alarm {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+        .animate-alarm {
+            animation: alarm 1.5s infinite;
+        }
+
+        /* Keyframes para la fiesta/rebote (Día 15) */
+        @keyframes party {
+            0%, 100% { transform: scale(1.25); }
+            50% { transform: scale(1.1); background-color: #34d399; }
+        }
+        .animate-party {
+            animation: party 0.7s infinite alternate;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main-container">
+        <header class="text-center w-full mb-6">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 tracking-tight">
+                Planificador <span class="text-pink-500">Octubre</span> - <span class="text-indigo-600">Diciembre 2025</span>
+            </h1>
+            <p class="text-lg text-gray-500 mt-2">La cuenta regresiva para el Encuentro de Jean y May ha comenzado.</p>
+        </header>
+
+        <!-- Aquí se renderizarán los tres meses -->
+    </div>
+
+    <script>
+        // --- Configuraciones de Fecha y Eventos ---
+        const MONTH_NAMES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+                             "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        
+        const SPECIAL_DAY = 16; // 16 de Diciembre: El Gran Encuentro (¡Actualizado!)
+        const SPECIAL_DAY_EVE = 15; // 15 de Diciembre: La Víspera de Alarma (¡Actualizado!)
+        const TARGET_YEAR = 2025;
+        
+        // Obtener la fecha actual del sistema
+        const todayDate = new Date();
+        const currentYear = todayDate.getFullYear();
+        const currentMonth = todayDate.getMonth(); // 0-11
+        const currentDay = todayDate.getDate();    // 1-31
+
+        /**
+         * Renderiza un mes específico en el contenedor principal.
+         * @param {number} monthIndex - 0 (Enero) a 11 (Diciembre)
+         * @param {number} year - Año del mes a renderizar
+         */
+        function renderMonth(monthIndex, year) {
+            const container = document.getElementById('main-container');
+            
+            const monthName = MONTH_NAMES[monthIndex];
+            const firstDayOfMonth = new Date(year, monthIndex, 1).getDay(); // 0=Dom, 1=Lun
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+            const monthDiv = document.createElement('div');
+            monthDiv.className = 'month-container';
+            monthDiv.innerHTML = `
+                <h2 class="text-2xl font-bold text-gray-700 mb-4 text-center">${monthName} ${year}</h2>
+                <div class="grid grid-cols-7 gap-1 text-center font-semibold text-sm mb-2 text-gray-500">
+                    <span>Dom</span>
+                    <span>Lun</span>
+                    <span>Mar</span>
+                    <span>Mié</span>
+                    <span>Jue</span>
+                    <span>Vie</span>
+                    <span>Sáb</span>
+                </div>
+                <div class="calendar-grid grid grid-cols-7 gap-1">
+                    <!-- Días van aquí -->
+                </div>
+            `;
+            container.appendChild(monthDiv);
+            const grid = monthDiv.querySelector('.calendar-grid');
+
+            // 1. Días de relleno
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'p-3 rounded-lg text-center';
+                grid.appendChild(emptyCell);
+            }
+
+            // 2. Días del mes
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayCell = document.createElement('div');
+                dayCell.textContent = day;
+                
+                let styleClass = '';
+                
+                // Estilos base de las celdas
+                const baseClass = 'flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 mx-auto rounded-full text-center transition-all duration-300 relative font-medium text-gray-800 hover:bg-gray-100 cursor-pointer';
+
+                // --- Lógica de Estado de Día ---
+                let isToday = (year === currentYear && monthIndex === currentMonth && day === currentDay);
+                let isPast = false;
+                let isSpecialEve = false;
+                let isSpecialDay = false;
+
+                // Determinar si es pasado
+                if (year < currentYear || (year === currentYear && monthIndex < currentMonth)) {
+                    isPast = true; // Meses anteriores completos
+                } else if (year === currentYear && monthIndex === currentMonth && day < currentDay) {
+                    isPast = true; // Días anteriores en el mes actual
+                }
+                
+                // Determinar días especiales (solo en Diciembre 2025)
+                if (year === TARGET_YEAR && monthIndex === 11) {
+                    isSpecialEve = (day === SPECIAL_DAY_EVE);
+                    isSpecialDay = (day === SPECIAL_DAY);
+                }
+
+                // --- Aplicar Clases ---
+                if (isPast) {
+                    // Días pasados: Tachados con 'X' (Animación)
+                    styleClass = 'line-through-x';
+                } else if (isToday) {
+                    // Día actual: Pulsando
+                    styleClass = `${baseClass} !text-white !bg-indigo-600 shadow-xl transform scale-110 ring-4 ring-indigo-300/50 animate-pulse-once`;
+                } else if (isSpecialEve) {
+                    // Día de Alarma (15 de Dic): Rojo, con sombra y mensaje
+                    styleClass = `${baseClass} !text-white !bg-red-600 shadow-xl ring-4 ring-red-300/50 cursor-pointer animate-alarm group`;
+                    
+                    // Mensaje flotante (Tooltip) al pasar el mouse
+                    const alarmMsg = document.createElement('div');
+                    alarmMsg.textContent = '¡Día Especial! ¡Solo horas del encuentro!';
+                    alarmMsg.className = 'absolute top-[-40px] left-1/2 transform -translate-x-1/2 bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded-lg shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10';
+                    dayCell.appendChild(alarmMsg);
+                } else if (isSpecialDay) {
+                    // Día Especial (16 de Dic): Animación de fiesta
+                    styleClass = `${baseClass} !text-white !bg-green-500 shadow-xl ring-4 ring-green-300/50 cursor-pointer transform scale-125 animate-party`;
+                } else {
+                    // Días futuros normales
+                    styleClass = `${baseClass}`;
+                }
+                
+                dayCell.className += ' ' + styleClass;
+                grid.appendChild(dayCell);
+            }
+        }
+
+        /**
+         * Función principal para renderizar los meses Octubre, Noviembre y Diciembre 2025.
+         */
+        function renderAllMonths() {
+            // Limpiar el contenedor antes de renderizar
+            document.getElementById('main-container').querySelectorAll('.month-container').forEach(e => e.remove());
+            
+            // Octubre (índice 9) a Diciembre (índice 11)
+            for (let i = 9; i <= 11; i++) {
+                renderMonth(i, TARGET_YEAR);
+            }
+        }
+
+        // Ejecutar el renderizado al cargar el documento
+        document.addEventListener('DOMContentLoaded', renderAllMonths);
+    </script>
+
+</body>
+</html>
