@@ -6,6 +6,8 @@
     <title>Calendario Multi-Mes Interactivo</title>
     <!-- Carga de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Canvas Confetti para el efecto de celebración -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         /* Configuración de la fuente y estilos generales */
         body {
@@ -52,7 +54,7 @@
             }
         }
 
-        /* --- Animaciones y Estilos Custom (Manteniendo las de la versión anterior) --- */
+        /* --- Animaciones y Estilos Custom --- */
 
         /* Keyframes para la animación de la 'X' */
         @keyframes drawX {
@@ -69,14 +71,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Optimización: Tamaño de celda dinámico */
             height: 2.5rem; 
             width: 2.5rem;
             margin-left: auto;
             margin-right: auto;
             border-radius: 9999px; 
             transition: all 0.3s;
-            overflow: hidden; /* <-- FIX CLAVE: Asegura que la 'X' no se salga del círculo */
+            overflow: hidden; 
         }
         @media (min-width: 640px) { /* sm:breakpoint */
             .line-through-x {
@@ -93,7 +94,7 @@
             top: 50%;
             left: 50%;
             transform-origin: center center;
-            width: 150%; /* <-- AJUSTE CLAVE: Se incrementa para asegurar que cubra la diagonal */
+            width: 150%; 
             height: 2px;
             background-color: #ef4444; /* Rojo para la X */
             border-radius: 1px;
@@ -137,6 +138,33 @@
         .animate-party {
             animation: party 0.7s infinite alternate;
         }
+        
+        /* Estilo para la etiqueta flotante */
+        .tooltip-tag {
+            position: absolute; 
+            top: -40px; 
+            left: 50%; 
+            transform: translate(-50%, 0); /* Mover horizontalmente para centrar */
+            text-white; 
+            text-xs; 
+            font-semibold; 
+            px-2; 
+            py-1; 
+            rounded-lg; 
+            shadow-xl; 
+            whitespace-nowrap;
+            transition: opacity 0.3s; 
+            z-index: 10;
+        }
+        
+        /* Aseguramos que las etiquetas sean visibles en móvil (no solo en hover) */
+        @media (max-width: 639px) { /* sm:breakpoint */
+            .group .tooltip-tag {
+                opacity: 1 !important;
+                /* Pequeño ajuste para que no se superponga */
+                top: -30px; 
+            }
+        }
     </style>
 </head>
 <body>
@@ -168,6 +196,9 @@
         const currentYear = todayDate.getFullYear();
         const currentMonth = todayDate.getMonth(); // 0-11
         const currentDay = todayDate.getDate();    // 1-31
+
+        // Condición para activar la animación de fiesta y el confetti
+        const IS_CELEBRATION_MOMENT = (currentYear === TARGET_YEAR && currentMonth === 11 && currentDay === SPECIAL_DAY);
 
         /**
          * Renderiza un mes específico en el contenedor principal.
@@ -249,14 +280,24 @@
                     // Día de Alarma (15 de Dic): Rojo, con sombra y mensaje
                     styleClass = `${baseClass} !text-white !bg-red-600 shadow-xl ring-4 ring-red-300/50 cursor-pointer animate-alarm group`;
                     
-                    // Mensaje flotante (Tooltip) al pasar el mouse (se ajusta al centro)
+                    // Etiqueta flotante con texto actualizado
                     const alarmMsg = document.createElement('div');
-                    alarmMsg.textContent = '¡Día Especial! ¡Solo horas del encuentro!';
-                    alarmMsg.className = 'absolute top-[-40px] left-1/2 transform -translate-x-1/2 bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded-lg shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10';
+                    alarmMsg.textContent = 'Por fin con el amor de mi vida';
+                    alarmMsg.className = 'tooltip-tag bg-red-700 opacity-0 group-hover:opacity-100';
                     dayCell.appendChild(alarmMsg);
                 } else if (isSpecialDay) {
-                    // Día Especial (16 de Dic): Animación de fiesta
-                    styleClass = `${baseClass} !text-white !bg-green-500 shadow-xl ring-4 ring-green-300/50 cursor-pointer transform scale-125 animate-party`;
+                    // Día Especial (16 de Dic)
+                    
+                    // Aplicar animación solo si es el día de la celebración
+                    const partyAnimationClass = IS_CELEBRATION_MOMENT ? 'animate-party transform scale-125' : '';
+
+                    styleClass = `${baseClass} !text-white !bg-green-500 shadow-xl ring-4 ring-green-300/50 cursor-pointer ${partyAnimationClass} group`;
+                    
+                    // Etiqueta flotante con texto actualizado
+                    const partyMsg = document.createElement('div');
+                    partyMsg.textContent = 'Por fin con el amor de mi vida';
+                    partyMsg.className = 'tooltip-tag bg-green-700 opacity-0 group-hover:opacity-100';
+                    dayCell.appendChild(partyMsg);
                 } else {
                     // Días futuros normales
                     styleClass = `${baseClass}`;
@@ -278,6 +319,25 @@
             for (let i = 9; i <= 11; i++) {
                 renderMonth(i, TARGET_YEAR);
             }
+
+            // --- Activación del Confeti el 16 de Diciembre ---
+            if (IS_CELEBRATION_MOMENT && typeof confetti !== 'undefined') {
+                setTimeout(() => {
+                    // Lanzar confeti desde el centro inferior
+                    confetti({
+                        particleCount: 200,
+                        spread: 180,
+                        origin: { y: 0.6 }
+                    });
+                    // Segundo lanzamiento para hacerlo más espectacular
+                    confetti({
+                        particleCount: 150,
+                        spread: 120,
+                        origin: { y: 0.8 },
+                        angle: 90
+                    });
+                }, 500); // Pequeño retraso para asegurar que la página cargue
+            }
         }
 
         // Ejecutar el renderizado al cargar el documento
@@ -286,3 +346,4 @@
 
 </body>
 </html>
+
