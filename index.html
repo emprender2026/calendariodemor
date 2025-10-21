@@ -76,6 +76,7 @@
             margin-right: auto;
             border-radius: 9999px; 
             transition: all 0.3s;
+            overflow: hidden; /* <-- FIX CLAVE: Asegura que la 'X' no se salga del círculo */
         }
         @media (min-width: 640px) { /* sm:breakpoint */
             .line-through-x {
@@ -92,7 +93,7 @@
             top: 50%;
             left: 50%;
             transform-origin: center center;
-            width: 100%;
+            width: 150%; /* <-- AJUSTE CLAVE: Se incrementa para asegurar que cubra la diagonal */
             height: 2px;
             background-color: #ef4444; /* Rojo para la X */
             border-radius: 1px;
