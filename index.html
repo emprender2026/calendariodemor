@@ -15,7 +15,8 @@
             justify-content: center;
             align-items: flex-start; /* Alinear arriba para el scroll de meses */
             min-height: 100vh;
-            padding: 30px 20px;
+            /* Optimización Móvil: Menos padding lateral en pantallas pequeñas */
+            padding: 20px 8px; 
         }
 
         /* Contenedor principal para permitir múltiples meses */
@@ -24,7 +25,8 @@
             flex-direction: column;
             gap: 40px; /* Espacio entre los meses */
             width: 100%;
-            max-width: 1000px;
+            max-width: 1000px; /* Límite para PC */
+            padding: 0 8px; /* Pequeño padding interno para evitar tocar los bordes del móvil */
         }
 
         /* Contenedor individual del mes */
@@ -32,9 +34,22 @@
             background-color: #ffffff;
             box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border-radius: 1rem; /* rounded-2xl */
-            padding: 24px 32px; /* p-6 sm:p-p8 */
+            /* Padding ajustado: menos en móvil, más en desktop */
+            padding: 20px 16px; 
             width: 100%;
             transition: all 0.3s;
+        }
+
+        /* Títulos de Días de la Semana (Responsive) */
+        .day-name {
+            font-size: 0.75rem; /* text-xs en móvil */
+            line-height: 1rem;
+        }
+        @media (min-width: 640px) {
+            .day-name {
+                font-size: 0.875rem; /* text-sm en desktop */
+                line-height: 1.25rem;
+            }
         }
 
         /* --- Animaciones y Estilos Custom (Manteniendo las de la versión anterior) --- */
@@ -54,12 +69,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 3rem; 
-            width: 3rem;
+            /* Optimización: Tamaño de celda dinámico */
+            height: 2.5rem; 
+            width: 2.5rem;
             margin-left: auto;
             margin-right: auto;
             border-radius: 9999px; 
             transition: all 0.3s;
+        }
+        @media (min-width: 640px) { /* sm:breakpoint */
+            .line-through-x {
+                height: 3rem; 
+                width: 3rem;
+            }
         }
 
         /* Creación de la 'X' usando pseudo-elementos */
@@ -97,7 +119,7 @@
             animation: pulse-once 1.5s ease-in-out infinite;
         }
 
-        /* Keyframes para la alarma (Día 14) */
+        /* Keyframes para la alarma (Día 15) */
         @keyframes alarm {
             0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
             50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
@@ -106,7 +128,7 @@
             animation: alarm 1.5s infinite;
         }
 
-        /* Keyframes para la fiesta/rebote (Día 15) */
+        /* Keyframes para la fiesta/rebote (Día 16) */
         @keyframes party {
             0%, 100% { transform: scale(1.25); }
             50% { transform: scale(1.1); background-color: #34d399; }
@@ -120,9 +142,11 @@
 
     <div id="main-container">
         <header class="text-center w-full mb-6">
+            <!-- Título responsive: sm:text-5xl -->
             <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-800 tracking-tight">
                 Planificador <span class="text-pink-500">Octubre</span> - <span class="text-indigo-600">Diciembre 2025</span>
             </h1>
+            <!-- Subtítulo responsive: text-lg -->
             <p class="text-lg text-gray-500 mt-2">La cuenta regresiva para el Encuentro de Jean y May ha comenzado.</p>
         </header>
 
@@ -134,8 +158,8 @@
         const MONTH_NAMES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
                              "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         
-        const SPECIAL_DAY = 16; // 16 de Diciembre: El Gran Encuentro (¡Actualizado!)
-        const SPECIAL_DAY_EVE = 15; // 15 de Diciembre: La Víspera de Alarma (¡Actualizado!)
+        const SPECIAL_DAY = 16; // 16 de Diciembre: El Gran Encuentro
+        const SPECIAL_DAY_EVE = 15; // 15 de Diciembre: La Víspera de Alarma
         const TARGET_YEAR = 2025;
         
         // Obtener la fecha actual del sistema
@@ -160,14 +184,15 @@
             monthDiv.className = 'month-container';
             monthDiv.innerHTML = `
                 <h2 class="text-2xl font-bold text-gray-700 mb-4 text-center">${monthName} ${year}</h2>
-                <div class="grid grid-cols-7 gap-1 text-center font-semibold text-sm mb-2 text-gray-500">
-                    <span>Dom</span>
-                    <span>Lun</span>
-                    <span>Mar</span>
-                    <span>Mié</span>
-                    <span>Jue</span>
-                    <span>Vie</span>
-                    <span>Sáb</span>
+                <!-- Días de la semana con clase responsiva -->
+                <div class="grid grid-cols-7 gap-1 text-center font-semibold mb-2 text-gray-500">
+                    <span class="day-name">Dom</span>
+                    <span class="day-name">Lun</span>
+                    <span class="day-name">Mar</span>
+                    <span class="day-name">Mié</span>
+                    <span class="day-name">Jue</span>
+                    <span class="day-name">Vie</span>
+                    <span class="day-name">Sáb</span>
                 </div>
                 <div class="calendar-grid grid grid-cols-7 gap-1">
                     <!-- Días van aquí -->
@@ -190,8 +215,8 @@
                 
                 let styleClass = '';
                 
-                // Estilos base de las celdas
-                const baseClass = 'flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 mx-auto rounded-full text-center transition-all duration-300 relative font-medium text-gray-800 hover:bg-gray-100 cursor-pointer';
+                // Estilos base de las celdas (Responsive: h-10/w-10 en móvil, sm:h-12/w-12 en desktop)
+                const baseClass = 'flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 mx-auto rounded-full text-center transition-all duration-300 relative font-medium text-gray-800 hover:bg-gray-100 cursor-pointer text-sm';
 
                 // --- Lógica de Estado de Día ---
                 let isToday = (year === currentYear && monthIndex === currentMonth && day === currentDay);
@@ -199,11 +224,11 @@
                 let isSpecialEve = false;
                 let isSpecialDay = false;
 
-                // Determinar si es pasado
+                // Determinar si es pasado (día ya completado)
                 if (year < currentYear || (year === currentYear && monthIndex < currentMonth)) {
-                    isPast = true; // Meses anteriores completos
+                    isPast = true; 
                 } else if (year === currentYear && monthIndex === currentMonth && day < currentDay) {
-                    isPast = true; // Días anteriores en el mes actual
+                    isPast = true; 
                 }
                 
                 // Determinar días especiales (solo en Diciembre 2025)
@@ -223,7 +248,7 @@
                     // Día de Alarma (15 de Dic): Rojo, con sombra y mensaje
                     styleClass = `${baseClass} !text-white !bg-red-600 shadow-xl ring-4 ring-red-300/50 cursor-pointer animate-alarm group`;
                     
-                    // Mensaje flotante (Tooltip) al pasar el mouse
+                    // Mensaje flotante (Tooltip) al pasar el mouse (se ajusta al centro)
                     const alarmMsg = document.createElement('div');
                     alarmMsg.textContent = '¡Día Especial! ¡Solo horas del encuentro!';
                     alarmMsg.className = 'absolute top-[-40px] left-1/2 transform -translate-x-1/2 bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded-lg shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10';
